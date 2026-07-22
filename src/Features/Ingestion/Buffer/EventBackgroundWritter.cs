@@ -1,6 +1,7 @@
 
 
 using System.Diagnostics;
+using Aptabase.Features.AppUsers;
 using Aptabase.Features.Privacy;
 
 namespace Aptabase.Features.Ingestion.Buffer;
@@ -11,13 +12,15 @@ public class EventBackgroundWritter : BackgroundService
     private readonly IIngestionClient _client;
     private readonly ILogger _logger;
     private readonly IUserHasher _hasher;
+    private readonly IAppUserService _appUsers;
     private readonly Stopwatch _watch = new();
 
-    public EventBackgroundWritter(IEventBuffer buffer, IUserHasher hasher, IIngestionClient client,  ILogger<EventBackgroundWritter> logger)
+    public EventBackgroundWritter(IEventBuffer buffer, IUserHasher hasher, IIngestionClient client, IAppUserService appUsers, ILogger<EventBackgroundWritter> logger)
     {
         _hasher = hasher ?? throw new ArgumentNullException(nameof(hasher));
         _buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _appUsers = appUsers ?? throw new ArgumentNullException(nameof(appUsers));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -64,6 +67,15 @@ public class EventBackgroundWritter : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send events. {Count} events were discarded.", events.Length);
+        }
+
+        try
+        {
+            await _appUsers.UpsertFromEventsAsync(events);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to upsert app users.");
         }
     }
 

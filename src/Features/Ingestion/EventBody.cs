@@ -51,8 +51,80 @@ public class EventBody
     [Required]
     public string SessionId { get; set; } = "";
 
+    // Optional application-provided user identifier (e.g. your own user id or email)
+    [StringLength(100)]
+    public string? UserId { get; set; }
+
+    // Optional user attributes (e.g. name), only used when UserId is present
+    public JsonDocument? UserProps { get; set; }
+
     public SystemProperties SystemProps { get; set; } = new();
     public JsonDocument? Props { get; set; }
+
+    // Resolves the application-provided user identity for this event.
+    // Preferred source is the top-level UserId/UserProps fields, but official SDKs
+    // can't send those, so we also accept reserved event props:
+    //   user_id   -> the user identifier
+    //   user_name -> stored as the "name" attribute
+    //   user_*    -> stored as an attribute without the "user_" prefix
+    public (string UserId, string UserPropsJson) ExtractUserIdentity(JsonObject stringProps, JsonObject numericProps)
+    {
+        if (!string.IsNullOrWhiteSpace(UserId))
+            return (UserId.Trim(), GetUserPropsJson());
+
+        var userId = stringProps["user_id"]?.GetValue<string>()?.Trim();
+        if (string.IsNullOrEmpty(userId) && numericProps["user_id"] is JsonNode numericUserId)
+            userId = numericUserId.GetValue<decimal>().ToString();
+
+        // user_* attributes are collected even without a user_id:
+        // the event may still be attributed to a user by its session
+        var props = new JsonObject();
+        CollectUserProps(stringProps, props);
+        CollectUserProps(numericProps, props);
+
+        return (userId?.Truncate(100, "") ?? "", props.ToJsonString());
+    }
+
+    private static void CollectUserProps(JsonObject source, JsonObject target)
+    {
+        foreach (var kv in source)
+        {
+            if (kv.Key == "user_id" || !kv.Key.StartsWith("user_", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var name = kv.Key.Equals("user_name", StringComparison.OrdinalIgnoreCase) ? "name" : kv.Key["user_".Length..];
+            if (name.Length > 0)
+                target[name] = kv.Value?.DeepClone();
+        }
+    }
+
+    public string GetUserPropsJson()
+    {
+        if (string.IsNullOrWhiteSpace(UserId) || UserProps is null || UserProps.RootElement.ValueKind != JsonValueKind.Object)
+            return "{}";
+
+        var values = new JsonObject();
+        foreach (var property in UserProps.RootElement.EnumerateObject().OrderBy(x => x.Name))
+        {
+            switch (property.Value.ValueKind)
+            {
+                case JsonValueKind.String:
+                    values[property.Name] = (property.Value.GetString() ?? "").Truncate(180, "...");
+                    break;
+                case JsonValueKind.Number:
+                    values[property.Name] = property.Value.GetDecimal();
+                    break;
+                case JsonValueKind.True:
+                    values[property.Name] = "true";
+                    break;
+                case JsonValueKind.False:
+                    values[property.Name] = "false";
+                    break;
+            }
+        }
+
+        return values.ToJsonString();
+    }
 
     public (JsonObject, JsonObject) SplitProps()
     {
@@ -113,6 +185,30 @@ public class EventBody
         (valid, msg) = ValidateProps();
         if (!valid)
             return (false, msg);
+
+        (valid, msg) = ValidateUserProps();
+        if (!valid)
+            return (false, msg);
+
+        return (true, string.Empty);
+    }
+
+    private (bool, string) ValidateUserProps()
+    {
+        if (UserProps is null || UserProps.RootElement.ValueKind == JsonValueKind.Null)
+            return (true, string.Empty);
+
+        if (UserProps.RootElement.ValueKind != JsonValueKind.Object)
+            return (false, $"UserProps must be an object, was: {UserProps.RootElement.GetRawText()}");
+
+        foreach (var prop in UserProps.RootElement.EnumerateObject())
+        {
+            if (string.IsNullOrWhiteSpace(prop.Name))
+                return (false, "UserProps key must not be empty.");
+
+            if (prop.Name.Length > 40)
+                return (false, $"UserProps key '{prop.Name}' must be less than or equal to 40 characters.");
+        }
 
         return (true, string.Empty);
     }

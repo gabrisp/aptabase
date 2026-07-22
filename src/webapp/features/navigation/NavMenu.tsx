@@ -8,6 +8,7 @@ import {
   IconGraph,
   IconLayoutGrid,
   IconSettings,
+  IconUser,
   IconUsers,
 } from "@tabler/icons-react";
 import { NavCategory } from "./NavCategory";
@@ -42,6 +43,13 @@ export function NavMenu(props: { onNavigation?: VoidFunction }) {
             disabled={!currentApp || !!currentApp.lockReason}
             href={`/${currentApp?.id}/sessions`}
             icon={IconUsers}
+            onNavigation={props.onNavigation}
+          />
+          <NavItem
+            label="Users"
+            disabled={!currentApp || !!currentApp.lockReason}
+            href={`/${currentApp?.id}/users`}
+            icon={IconUser}
             onNavigation={props.onNavigation}
           />
           <NavItem

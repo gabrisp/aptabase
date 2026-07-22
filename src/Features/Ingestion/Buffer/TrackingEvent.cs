@@ -25,4 +25,8 @@ public readonly struct TrackingEvent
     public readonly string StringProps { get; init; }
     public readonly string NumericProps { get; init; }
     public readonly bool IsDebug { get; init; }
+
+    // Application-provided user identification (optional)
+    public readonly string AppUserId { get; init; }
+    public readonly string UserPropsJson { get; init; }
 }

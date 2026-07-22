@@ -2,6 +2,7 @@ using Aptabase.Data;
 using Aptabase.Data.Migrations;
 using Aptabase.Features;
 using Aptabase.Features.Apps;
+using Aptabase.Features.AppUsers;
 using Aptabase.Features.Authentication;
 using Aptabase.Features.Billing;
 using Aptabase.Features.Billing.LemonSqueezy;
@@ -145,6 +146,7 @@ public partial class Program
         builder.Services.AddSingleton<IIngestionCache, IngestionCache>();
         builder.Services.AddSingleton<IBlobService, DatabaseBlobService>();
         builder.Services.AddSingleton<IEventBuffer, InMemoryEventBuffer>();
+        builder.Services.AddSingleton<IAppUserService, AppUserService>();
         builder.Services.AddHostedService<EventBackgroundWritter>();
         builder.Services.AddHostedService<PurgeDailySaltsCronJob>();
 

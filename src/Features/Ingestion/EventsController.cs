@@ -145,6 +145,7 @@ public class EventsController : Controller
     private static TrackingEvent NewTrackingEvent(string appId, string countryCode, string regionName, string clientIp, string userAgent, EventBody body)
     {
         var (stringProps, numericProps) = body.SplitProps();
+        var (appUserId, userPropsJson) = body.ExtractUserIdentity(stringProps, numericProps);
         return new TrackingEvent
         {
             ClientIpAddress = clientIp,
@@ -168,6 +169,8 @@ public class EventsController : Controller
             StringProps = stringProps.ToJsonString(),
             NumericProps = numericProps.ToJsonString(),
             IsDebug = body.SystemProps.IsDebug,
+            AppUserId = appUserId,
+            UserPropsJson = userPropsJson,
         };
     }
 }
