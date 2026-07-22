@@ -34,6 +34,16 @@ public class EnvSettings
     // Variable Name: AUTH_SECRET
     public byte[] AuthSecret { get; private set; } = [];
 
+    // Disables new account registration (the very first account is always allowed)
+    // E.g: true
+    // Variable Name: AUTH_DISABLE_SIGNUP
+    public bool DisableSignUp { get; private set; }
+
+    // Disables the magic link (email) sign in/up flow
+    // E.g: true
+    // Variable Name: AUTH_DISABLE_MAGIC_LINKS
+    public bool DisableMagicLinks { get; private set; }
+
     public string? MailCatcherConnectionString { get; private set; }
 
     // The host of the SMTP server
@@ -102,6 +112,8 @@ public class EnvSettings
             TinybirdBaseUrl = Get("TINYBIRD_BASE_URL"),
             TinybirdToken = Get("TINYBIRD_TOKEN"),
             AuthSecret = Encoding.ASCII.GetBytes(MustGet("AUTH_SECRET")),
+            DisableSignUp = GetBool("AUTH_DISABLE_SIGNUP"),
+            DisableMagicLinks = GetBool("AUTH_DISABLE_MAGIC_LINKS"),
             LemonSqueezyApiKey = Get("LEMONSQUEEZY_API_KEY"),
             LemonSqueezySigningSecret = Get("LEMONSQUEEZY_SIGNING_SECRET"),
 
@@ -136,6 +148,12 @@ public class EnvSettings
     private static string Get(string name)
     {
         return Environment.GetEnvironmentVariable(name) ?? "";
+    }
+
+    private static bool GetBool(string name)
+    {
+        var value = Environment.GetEnvironmentVariable(name) ?? "";
+        return value.Equals("true", StringComparison.OrdinalIgnoreCase) || value == "1";
     }
 
     private static int GetInt(string name)

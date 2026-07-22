@@ -103,6 +103,16 @@ public partial class Program
                 })
             );
 
+            c.AddPolicy("PasswordAuth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+                httpContext.ResolveClientIpAddress(),
+                partition => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromMinutes(5)
+                })
+            );
+
             c.AddPolicy("Stats", httpContext => RateLimitPartition.GetFixedWindowLimiter(
                 httpContext.ResolveClientIpAddress(),
                 partition => new FixedWindowRateLimiterOptions

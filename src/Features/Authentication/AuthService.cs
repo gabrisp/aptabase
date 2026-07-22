@@ -20,6 +20,9 @@ public interface IAuthService
     Task<UserAccount> CreateAccountAsync(string name, string email, CancellationToken cancellationToken);
     Task AttachUserAuthProviderAsync(UserAccount user, string providerName, string providerUid, CancellationToken cancellationToken);
     Task DeleteUserByIdAsync(string id, CancellationToken cancellationToken);
+    Task<UserAccount> CreateAccountWithPasswordAsync(string name, string email, string passwordHash, CancellationToken cancellationToken);
+    Task<string?> GetPasswordHashByEmailAsync(string email, CancellationToken cancellationToken);
+    Task<long> CountUsersAsync(CancellationToken cancellationToken);
 }
 
 public class AuthService : IAuthService
@@ -95,6 +98,32 @@ public class AuthService : IAuthService
         await _db.Connection.ExecuteAsync(cmd);
 
         return new UserAccount(new UserIdentity(userId, name, email));
+    }
+
+    public async Task<UserAccount> CreateAccountWithPasswordAsync(string name, string email, string passwordHash, CancellationToken cancellationToken)
+    {
+        var userId = NanoId.New();
+        var cmd = new CommandDefinition(
+            "INSERT INTO users (id, name, email, free_quota, password_hash) VALUES (@userId, @name, @email, 20000, @passwordHash)",
+            new { userId, name, email = email.ToLower(), passwordHash },
+            cancellationToken: cancellationToken
+        );
+
+        await _db.Connection.ExecuteAsync(cmd);
+
+        return new UserAccount(new UserIdentity(userId, name, email));
+    }
+
+    public async Task<string?> GetPasswordHashByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        var cmd = new CommandDefinition("SELECT password_hash FROM users WHERE email = @email", new { email = email.ToLower() }, cancellationToken: cancellationToken);
+        return await _db.Connection.QuerySingleOrDefaultAsync<string?>(cmd);
+    }
+
+    public async Task<long> CountUsersAsync(CancellationToken cancellationToken)
+    {
+        var cmd = new CommandDefinition("SELECT COUNT(*) FROM users", cancellationToken: cancellationToken);
+        return await _db.Connection.ExecuteScalarAsync<long>(cmd);
     }
 
     public async Task SignOutAsync()

@@ -1,52 +1,38 @@
-import { requestRegisterLink } from "@features/auth";
+import { Button } from "@components/Button";
 import { Page } from "@components/Page";
+import { passwordRegister } from "@features/auth";
+import { isOAuthEnabled } from "@features/env";
+import { TextInput } from "@components/TextInput";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { DataResidency } from "./DataResidency";
 import { LegalNotice } from "./LegalNotice";
+import { Logo } from "./Logo";
 import { RegionSwitch } from "./RegionSwitch";
 import { SignInWithGitHub } from "./SignInWithGitHub";
 import { SignInWithGoogle } from "./SignInWithGoogle";
-import { isOAuthEnabled } from "@features/env";
-import { Logo } from "./Logo";
-import { Button } from "@components/Button";
-import { TextInput } from "@components/TextInput";
-
-type FormStatus = "idle" | "loading" | "success";
-
-type StatusMessageProps = {
-  status: FormStatus;
-};
-
-const StatusMessage = (props: StatusMessageProps) => {
-  if (props.status === "success") {
-    return <span className="text-success">Woo-hoo! Email sent, go check your inbox!</span>;
-  }
-
-  return (
-    <>
-      Already registered?{" "}
-      <Link className="font-medium text-foreground" to="/auth">
-        Sign in
-      </Link>{" "}
-      to your account.
-    </>
-  );
-};
 
 Component.displayName = "RegisterPage";
 export function Component() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<FormStatus>("idle");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setStatus("loading");
+    setLoading(true);
+    setError(null);
 
-    await requestRegisterLink(name, email);
+    const errorMessage = await passwordRegister(name, email, password);
+    if (errorMessage) {
+      setError(errorMessage);
+      setLoading(false);
+      return;
+    }
 
-    setStatus("success");
+    location.href = "/";
   };
 
   return (
@@ -85,7 +71,7 @@ export function Component() {
               onChange={(e) => setName(e.target.value)}
             />
             <TextInput
-              label="Email Address"
+              label="Email address"
               name="email"
               type="email"
               placeholder="peter.parker@corp.com"
@@ -94,9 +80,30 @@ export function Component() {
               required={true}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <Button loading={status === "loading"}>Send magic link</Button>
+            <TextInput
+              label="Password"
+              name="password"
+              type="password"
+              placeholder="At least 8 characters"
+              autoComplete="new-password"
+              minLength={8}
+              value={password}
+              required={true}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button loading={loading}>Create account</Button>
             <p className="text-center text-sm h-10 text-muted-foreground">
-              <StatusMessage status={status} />
+              {error ? (
+                <span className="text-destructive">{error}</span>
+              ) : (
+                <>
+                  Already registered?{" "}
+                  <Link className="font-medium text-foreground" to="/auth">
+                    Sign in
+                  </Link>{" "}
+                  to your account.
+                </>
+              )}
             </p>
           </form>
         </div>

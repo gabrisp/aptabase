@@ -26,6 +26,8 @@ services:
       ASPNETCORE_HTTP_PORTS: 8080
       BASE_URL: ${BASE_URL}
       AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_DISABLE_SIGNUP: ${AUTH_DISABLE_SIGNUP:-false}
+      AUTH_DISABLE_MAGIC_LINKS: ${AUTH_DISABLE_MAGIC_LINKS:-false}
       DATABASE_URL: Server=db;Port=5432;User Id=aptabase;Password=${POSTGRES_PASSWORD};Database=aptabase
       CLICKHOUSE_URL: Host=events_db;Port=8123;Username=aptabase;Password=${CLICKHOUSE_PASSWORD}
       SMTP_HOST: ${SMTP_HOST:-}

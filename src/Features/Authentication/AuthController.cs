@@ -22,6 +22,27 @@ public class RegisterBodyRequest
     public string Email { get; set; } = "";
 }
 
+public class PasswordSignInBodyRequest
+{
+    [EmailAddress]
+    public string Email { get; set; } = "";
+
+    [Required]
+    public string Password { get; set; } = "";
+}
+
+public class PasswordRegisterBodyRequest
+{
+    [StringLength(40, MinimumLength = 2)]
+    public string Name { get; set; } = "";
+
+    [EmailAddress]
+    public string Email { get; set; } = "";
+
+    [StringLength(100, MinimumLength = 8)]
+    public string Password { get; set; } = "";
+}
+
 [ApiController]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class AuthController : Controller
@@ -46,6 +67,9 @@ public class AuthController : Controller
     [HttpPost("/api/_auth/signin")]
     public async Task<IActionResult> SignIn([FromBody] SignInBodyRequest body, CancellationToken cancellationToken)
     {
+        if (_env.DisableMagicLinks)
+            return StatusCode(403, "Magic link authentication is disabled.");
+
         var found = await _authService.SendSignInEmailAsync(body.Email.Trim(), cancellationToken);
 
         if (!found)
@@ -58,8 +82,62 @@ public class AuthController : Controller
     [EnableRateLimiting("SignUp")]
     public async Task<IActionResult> Register([FromBody] RegisterBodyRequest body, CancellationToken cancellationToken)
     {
+        if (_env.DisableMagicLinks)
+            return StatusCode(403, "Magic link authentication is disabled.");
+
+        if (await IsSignUpClosed(cancellationToken))
+            return StatusCode(403, "Sign up is disabled on this instance.");
+
         await _authService.SendRegisterEmailAsync(body.Name.Trim(), body.Email.Trim(), cancellationToken);
         return Ok(new { });
+    }
+
+    [HttpPost("/api/_auth/password/signin")]
+    [EnableRateLimiting("PasswordAuth")]
+    public async Task<IActionResult> PasswordSignIn([FromBody] PasswordSignInBodyRequest body, CancellationToken cancellationToken)
+    {
+        var email = body.Email.Trim();
+        var passwordHash = await _authService.GetPasswordHashByEmailAsync(email, cancellationToken);
+
+        if (!PasswordHasher.Verify(body.Password, passwordHash))
+        {
+            _logger.LogWarning("Failed password sign in attempt for {Email}", email);
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
+
+        var user = await _authService.FindUserByEmailAsync(email, cancellationToken);
+        if (user is null)
+            return Unauthorized(new { message = "Invalid email or password." });
+
+        await _authService.SignInAsync(user);
+        return Ok(new { });
+    }
+
+    [HttpPost("/api/_auth/password/register")]
+    [EnableRateLimiting("SignUp")]
+    public async Task<IActionResult> PasswordRegister([FromBody] PasswordRegisterBodyRequest body, CancellationToken cancellationToken)
+    {
+        if (await IsSignUpClosed(cancellationToken))
+            return StatusCode(403, "Sign up is disabled on this instance.");
+
+        var email = body.Email.Trim();
+        var existing = await _authService.FindUserByEmailAsync(email, cancellationToken);
+        if (existing is not null)
+            return Conflict(new { message = "An account with this email already exists." });
+
+        var user = await _authService.CreateAccountWithPasswordAsync(body.Name.Trim(), email, PasswordHasher.Hash(body.Password), cancellationToken);
+        await _authService.SignInAsync(user);
+        return Ok(new { });
+    }
+
+    // Sign up can be disabled, but the very first account is always allowed
+    // so the instance owner can create theirs
+    private async Task<bool> IsSignUpClosed(CancellationToken cancellationToken)
+    {
+        if (!_env.DisableSignUp)
+            return false;
+
+        return await _authService.CountUsersAsync(cancellationToken) > 0;
     }
 
     [HttpGet("/api/_auth/github")]
