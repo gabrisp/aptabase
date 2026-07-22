@@ -49,11 +49,11 @@ export function AppUsersList(props: Props) {
           <EmptyState />
         </div>
       ) : (
-        <div className="flow-root">
+        <div className="rounded-lg border bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <div className="inline-block min-w-full py-2 align-middle relative">
-              <table className={`min-w-full divide-y divide-gray-300 ${isPlaceholderData ? "opacity-50" : ""}`}>
-                <thead>
+            <div className="min-w-full relative">
+              <table className={`min-w-full divide-y divide-border ${isPlaceholderData ? "opacity-50" : ""}`}>
+                <thead className="bg-muted/50">
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6 lg:pl-8">
                       <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function AppUsersList(props: Props) {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-600">
+                <tbody className="divide-y divide-border">
                   {users.map((user) => (
                     <tr
                       key={user.userId}
