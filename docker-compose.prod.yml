@@ -15,6 +15,7 @@ services:
     # pasted standalone (e.g. Coolify "Docker Compose" service without a git source)
     build:
       context: "https://github.com/gabrisp/aptabase.git#main"
+    image: "aptabase-selfhosted:latest"
     restart: unless-stopped
     # No host port binding: Coolify's proxy routes the domain to port 8080
     # on the internal network. If you run this outside Coolify, add:
