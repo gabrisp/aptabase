@@ -19,7 +19,7 @@ type AppsContextType = {
   buildMode: BuildMode;
   createApp: (name: string) => Promise<Application>;
   deleteApp: (appId: string) => Promise<void>;
-  updateApp: (appId: string, name: string, icon: string) => Promise<Application>;
+  updateApp: (appId: string, name: string, icon: string, revenueCatProjectId?: string) => Promise<Application>;
   refetchApps: () => Promise<void>;
   switchBuildMode: (mode: BuildMode) => void;
 };
@@ -44,8 +44,13 @@ export function AppsProvider(props: Props) {
     await refetch();
   };
 
-  const updateAppAndRefresh = async (appId: string, name: string, icon: string): Promise<Application> => {
-    const app = await updateApp(appId, name, icon);
+  const updateAppAndRefresh = async (
+    appId: string,
+    name: string,
+    icon: string,
+    revenueCatProjectId?: string
+  ): Promise<Application> => {
+    const app = await updateApp(appId, name, icon, revenueCatProjectId);
     toast(`${name} app was successfully updated.`);
     await refetch();
     return app;

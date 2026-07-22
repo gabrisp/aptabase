@@ -5,7 +5,7 @@ import { LoadingState } from "@components/LoadingState";
 import { Page, PageHeading } from "@components/Page";
 import { useApps, useCurrentApp } from "@features/apps";
 import { formatDate, formatTime } from "@fns/format-date";
-import { IconArrowLeft, IconCalendar, IconClick, IconClock, IconUser } from "@tabler/icons-react";
+import { IconArrowLeft, IconCalendar, IconClick, IconClock, IconExternalLink, IconUser } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -43,11 +43,26 @@ export function Component() {
   return (
     <Page title={user?.name || userId}>
       {buildMode === "debug" && <DebugModeBanner />}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" onClick={() => navigate(`/${app.id}/users`)}>
-          <IconArrowLeft className="h-5 w-5" />
-        </Button>
-        <PageHeading title={user?.name || userId} subtitle={user?.name ? userId : undefined} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={() => navigate(`/${app.id}/users`)}>
+            <IconArrowLeft className="h-5 w-5" />
+          </Button>
+          <PageHeading title={user?.name || userId} subtitle={user?.name ? userId : undefined} />
+        </div>
+        {app.revenueCatProjectId && (
+          <a
+            href={`https://app.revenuecat.com/projects/${app.revenueCatProjectId}/customers/${encodeURIComponent(
+              userId
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-2 text-sm font-medium hover:bg-accent"
+          >
+            <IconExternalLink className="h-4 w-4" />
+            Open in RevenueCat
+          </a>
+        )}
       </div>
 
       {isLoading ? (

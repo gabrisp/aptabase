@@ -12,6 +12,7 @@ public class Application
     public bool HasEvents { get; set; } = false;
     public bool HasOwnership { get; set; } = false;
     public char? LockReason { get; set; }
+    public string? RevenueCatProjectId { get; set; }
 }
 
 public interface IAppQueries

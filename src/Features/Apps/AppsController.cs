@@ -52,6 +52,10 @@ public class UpdateAppRequestBody
     [Required]
     [StringLength(40, MinimumLength = 2)]
     public string Name { get; set; } = "";
+
+    // Optional RevenueCat project id, used to deep link users to their RevenueCat customer page
+    [StringLength(50)]
+    public string? RevenueCatProjectId { get; set; }
 }
 
 public class InitiateAppRequestBody
@@ -85,9 +89,9 @@ public class AppsController : Controller
         var user = this.GetCurrentUserIdentity();
 
         var apps = await _db.Connection.QueryAsync<Application>(
-            @"SELECT a.id, a.name, a.icon_path, a.app_key, 
-                     a.owner_id = @userId AS has_ownership, a.has_events, 
-                     u.lock_reason
+            @"SELECT a.id, a.name, a.icon_path, a.app_key,
+                     a.owner_id = @userId AS has_ownership, a.has_events,
+                     u.lock_reason, a.revenuecat_project_id
               FROM apps a
               LEFT JOIN app_shares s
               ON s.app_id = a.id
@@ -132,9 +136,9 @@ public class AppsController : Controller
         var user = this.GetCurrentUserIdentity();
 
         var app = await _db.Connection.QueryFirstOrDefaultAsync<Application>(
-            @"SELECT a.id, a.name, a.icon_path, a.app_key, 
+            @"SELECT a.id, a.name, a.icon_path, a.app_key,
                      a.owner_id = @userId as has_ownership, a.has_events,
-                     u.lock_reason
+                     u.lock_reason, a.revenuecat_project_id
               FROM apps a
               LEFT JOIN app_shares s
               ON s.app_id = a.id
@@ -165,11 +169,13 @@ public class AppsController : Controller
         }
 
         app.Name = body.Name;
-        await _db.Connection.ExecuteScalarAsync<string>("UPDATE apps SET name = @name, icon_path = @iconPath WHERE id = @appId", new
+        app.RevenueCatProjectId = string.IsNullOrWhiteSpace(body.RevenueCatProjectId) ? null : body.RevenueCatProjectId.Trim();
+        await _db.Connection.ExecuteScalarAsync<string>("UPDATE apps SET name = @name, icon_path = @iconPath, revenuecat_project_id = @revenueCatProjectId WHERE id = @appId", new
         {
             appId = app.Id,
             name = app.Name,
             iconPath = app.IconPath,
+            revenueCatProjectId = app.RevenueCatProjectId,
         });
 
         return Ok(app);
@@ -487,8 +493,8 @@ public class AppsController : Controller
     {
         var user = this.GetCurrentUserIdentity();
         return await _db.Connection.QueryFirstOrDefaultAsync<Application>(
-            @"SELECT a.id, a.name, a.icon_path, a.app_key, true as has_ownership, 
-                     a.has_events, u.lock_reason
+            @"SELECT a.id, a.name, a.icon_path, a.app_key, true as has_ownership,
+                     a.has_events, u.lock_reason, a.revenuecat_project_id
               FROM apps a
               INNER JOIN users u
               ON u.id = a.owner_id

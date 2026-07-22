@@ -15,12 +15,13 @@ export function GeneralSettings(props: Props) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const updatedApp = await updateApp(props.app.id, name, icon);
+    const updatedApp = await updateApp(props.app.id, name, icon, revenueCatProjectId);
     navigate(`/${updatedApp.id}/`);
   };
 
   const [name, setName] = useState(props.app.name);
   const [icon, setIcon] = useState("");
+  const [revenueCatProjectId, setRevenueCatProjectId] = useState(props.app.revenueCatProjectId ?? "");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-[30rem]">
@@ -34,6 +35,16 @@ export function GeneralSettings(props: Props) {
         maxLength={40}
         onChange={(e) => setName(e.target.value)}
         description="A friendly name to identify your app. You can change at any time."
+      />
+
+      <TextInput
+        label="RevenueCat Project ID"
+        name="revenueCatProjectId"
+        value={revenueCatProjectId}
+        maxLength={50}
+        placeholder="e.g. abcd1234"
+        onChange={(e) => setRevenueCatProjectId(e.target.value)}
+        description="Optional. When set, user pages show a link to open that customer in RevenueCat."
       />
 
       <div className="w-20">
