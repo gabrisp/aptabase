@@ -143,3 +143,22 @@ export type SessionTimeline = {
 export function liveSessionDetails(params: QueryParams): Promise<LiveRecentSession & SessionTimeline> {
   return api.get<LiveRecentSession & SessionTimeline>(`/_stats/live-session-details`, params);
 }
+
+export type EventFeedRow = {
+  timestamp: string;
+  eventName: string;
+  appUserId: string;
+  sessionId: string;
+  osName: string;
+  osVersion: string;
+  appVersion: string;
+  countryCode: string;
+  regionName: string;
+  stringProps: string;
+  numericProps: string;
+};
+
+export function eventsFeed(params: QueryParams & { before?: string; limit?: number }): Promise<EventFeedRow[]> {
+  const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null && v !== ""));
+  return api.get<EventFeedRow[]>(`/_stats/events`, cleanParams);
+}

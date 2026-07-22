@@ -54,6 +54,10 @@ const router = createBrowserRouter([
         lazy: () => import("./features/analytics/UserSessionsPage"),
       },
       {
+        path: "/:id/events",
+        lazy: () => import("./features/analytics/EventsPage"),
+      },
+      {
         path: "/:id/users/:userId",
         lazy: () => import("./features/analytics/UserDetailsPage"),
       },

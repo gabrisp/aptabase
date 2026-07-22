@@ -1,0 +1,36 @@
+SELECT timestamp as Timestamp,
+       event_name as EventName,
+       app_user_id as AppUserId,
+       session_id as SessionId,
+       os_name as OsName,
+       os_version as OsVersion,
+       app_version as AppVersion,
+       country_code as CountryCode,
+       region_name as RegionName,
+       string_props as StringProps,
+       numeric_props as NumericProps
+FROM events
+WHERE app_id = '{{app_id}}'
+{% if event_name %}
+AND event_name = '{{event_name}}'
+{% endif %}
+{% if os_name %}
+AND os_name = '{{os_name}}'
+{% endif %}
+{% if country_code %}
+AND country_code = '{{country_code}}'
+{% endif %}
+{% if app_version %}
+AND app_version = '{{app_version}}'
+{% endif %}
+{% if date_from %}
+AND timestamp >= '{{date_from}}'
+{% endif %}
+{% if date_to %}
+AND timestamp <= '{{date_to}}'
+{% endif %}
+{% if before %}
+AND timestamp < '{{before}}'
+{% endif %}
+ORDER BY timestamp DESC
+LIMIT {{limit}}

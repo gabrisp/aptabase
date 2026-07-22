@@ -106,6 +106,21 @@ public record SessionTimeline
     public string[] EventsNumericProps { get; set; } = Array.Empty<string>();
 }
 
+public record EventFeedRow
+{
+    public DateTime Timestamp { get; set; }
+    public string EventName { get; set; } = "";
+    public string AppUserId { get; set; } = "";
+    public string SessionId { get; set; } = "";
+    public string OsName { get; set; } = "";
+    public string OsVersion { get; set; } = "";
+    public string AppVersion { get; set; } = "";
+    public string CountryCode { get; set; } = "";
+    public string RegionName { get; set; } = "";
+    public string StringProps { get; set; } = "{}";
+    public string NumericProps { get; set; } = "{}";
+}
+
 public enum TopNValue
 {
     UniqueSessions,
@@ -358,6 +373,30 @@ public class StatsController : Controller
         }, cancellationToken);
 
         return Ok(row);
+    }
+
+    [HttpGet("/api/_stats/events")]
+    public async Task<IActionResult> EventsFeed(
+        [FromQuery] QueryParams body,
+        [FromQuery] DateTime? before,
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        var args = body.Parse();
+        var rows = await _queryClient.NamedQueryAsync<EventFeedRow>("events_feed__v1", new
+        {
+            app_id = args.AppId,
+            event_name = args.EventName,
+            os_name = args.OsName,
+            country_code = args.CountryCode,
+            app_version = args.AppVersion,
+            date_from = args.DateFrom,
+            date_to = args.DateTo,
+            before,
+            limit = Math.Clamp(limit ?? 50, 1, 200),
+        }, cancellationToken);
+
+        return Ok(rows);
     }
 
     [HttpGet("/api/_stats/historical-sessions")]

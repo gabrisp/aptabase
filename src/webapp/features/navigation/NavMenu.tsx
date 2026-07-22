@@ -3,6 +3,7 @@ import { isSupportEnabled } from "@features/env";
 import { SupportNavCategory } from "@features/support";
 import {
   IconActivityHeartbeat,
+  IconClick,
   IconCloudDownload,
   IconCode,
   IconGraph,
@@ -50,6 +51,13 @@ export function NavMenu(props: { onNavigation?: VoidFunction }) {
             disabled={!currentApp || !!currentApp.lockReason}
             href={`/${currentApp?.id}/users`}
             icon={IconUser}
+            onNavigation={props.onNavigation}
+          />
+          <NavItem
+            label="Events"
+            disabled={!currentApp || !!currentApp.lockReason}
+            href={`/${currentApp?.id}/events`}
+            icon={IconClick}
             onNavigation={props.onNavigation}
           />
           <NavItem
