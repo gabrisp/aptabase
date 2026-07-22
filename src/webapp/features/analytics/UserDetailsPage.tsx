@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { DebugModeBanner } from "./mode/DebugModeBanner";
+import { AppUserEventsList } from "./users/AppUserEventsList";
 import { getAppUser, parseUserProps } from "./users/query";
 
 Component.displayName = "UserDetailsPage";
@@ -115,6 +116,10 @@ export function Component() {
                 <p className="text-sm text-muted-foreground">No attributes reported for this user.</p>
               )}
             </dl>
+          </div>
+
+          <div className="lg:col-span-2">
+            <AppUserEventsList appId={app.id} buildMode={buildMode} userId={userId} />
           </div>
         </div>
       )}

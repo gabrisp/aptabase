@@ -54,11 +54,15 @@ public class EventBackgroundWritter : BackgroundService
         var events = _buffer.TakeAll();
         if (events.Length == 0) return;
 
+        // Resolve app user ids up front so both the analytics store and
+        // the app_users table see session-attributed events
+        var appUserIds = _appUsers.AttributeEvents(events);
+
         try
         {
             _watch.Restart();
 
-            var rows = await Task.WhenAll(events.Select(ToEventRow));
+            var rows = await Task.WhenAll(events.Select((e, i) => ToEventRow(e, appUserIds[i])));
 
             await _client.BulkSendEventAsync(rows);
             _watch.Stop();
@@ -71,7 +75,7 @@ public class EventBackgroundWritter : BackgroundService
 
         try
         {
-            await _appUsers.UpsertFromEventsAsync(events);
+            await _appUsers.UpsertFromEventsAsync(events, appUserIds);
         }
         catch (Exception ex)
         {
@@ -79,9 +83,9 @@ public class EventBackgroundWritter : BackgroundService
         }
     }
 
-    private async Task<EventRow> ToEventRow(TrackingEvent e) 
+    private async Task<EventRow> ToEventRow(TrackingEvent e, string appUserId)
     {
         var userId = await _hasher.CalculateHash(e.Timestamp, e.AppId, e.SessionId, e.ClientIpAddress, e.UserAgent);
-        return new EventRow(ref e, userId);
+        return new EventRow(ref e, userId, appUserId);
     }
 }

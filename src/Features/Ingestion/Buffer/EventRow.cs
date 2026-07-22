@@ -13,6 +13,7 @@ public readonly struct EventRow
     public readonly DateTime Timestamp;
     public readonly string EventName;
     public readonly string UserId;
+    public readonly string AppUserId;
     public readonly string SessionId;
     public readonly string OSName;
     public readonly string OSVersion;
@@ -30,7 +31,7 @@ public readonly struct EventRow
     public readonly string NumericProps;
     public readonly DateTime TTL;
 
-    public EventRow(ref TrackingEvent e, string userId)
+    public EventRow(ref TrackingEvent e, string userId, string appUserId)
     {
         var ttl = e.IsDebug ? DebugTTL : ReleaseTTL;
 
@@ -38,6 +39,7 @@ public readonly struct EventRow
         Timestamp = e.Timestamp;
         EventName = e.EventName;
         UserId = userId;
+        AppUserId = appUserId;
         SessionId = e.SessionId;
         OSName = e.OSName;
         OSVersion = e.OSVersion;
@@ -63,6 +65,7 @@ public readonly struct EventRow
         WriteProperty(writer, "timestamp", Timestamp.ToString("o"));
         WriteProperty(writer, "eventName", EventName);
         WriteProperty(writer, "userId", UserId);
+        WriteProperty(writer, "appUserId", AppUserId);
         WriteProperty(writer, "sessionId", SessionId);
         WriteProperty(writer, "osName", OSName);
         WriteProperty(writer, "osVersion", OSVersion);

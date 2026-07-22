@@ -18,7 +18,8 @@ public record AppUser
 
 public interface IAppUserService
 {
-    Task UpsertFromEventsAsync(IEnumerable<TrackingEvent> events);
+    string[] AttributeEvents(TrackingEvent[] events);
+    Task UpsertFromEventsAsync(TrackingEvent[] events, string[] appUserIds);
     Task<IEnumerable<AppUser>> ListAsync(string appId, string? search, CancellationToken cancellationToken);
     Task<AppUser?> GetAsync(string appId, string userId, CancellationToken cancellationToken);
 }
@@ -39,15 +40,20 @@ public class AppUserService : IAppUserService
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-    public async Task UpsertFromEventsAsync(IEnumerable<TrackingEvent> events)
+    // Resolves the app user id of every event: events without a user_id inherit
+    // the user of their session, if it was previously identified. Returns an array
+    // parallel to the input, so the resolved ids also reach the analytics store.
+    public string[] AttributeEvents(TrackingEvent[] events)
     {
         var now = DateTime.UtcNow;
+        var result = new string[events.Length];
 
-        // Keep only the latest event per (app, user), merging user props along the way.
-        // Ordered by timestamp so an identified event maps its session before later anonymous ones.
-        var byUser = new Dictionary<(string, string), (TrackingEvent Event, string PropsJson)>();
-        foreach (var e in events.OrderBy(x => x.Timestamp))
+        // Process in timestamp order so an identified event maps its session
+        // before later anonymous events of the same batch
+        var indices = Enumerable.Range(0, events.Length).OrderBy(i => events[i].Timestamp);
+        foreach (var i in indices)
         {
+            var e = events[i];
             var appId = e.IsDebug ? $"{e.AppId}_DEBUG" : e.AppId;
             var userId = e.AppUserId ?? "";
 
@@ -64,9 +70,25 @@ public class AppUserService : IAppUserService
                 _sessionUsers[(appId, e.SessionId)] = mapped with { SeenAt = now };
             }
 
+            result[i] = userId?.Trim() ?? "";
+        }
+
+        PruneSessionUsers(now);
+        return result;
+    }
+
+    public async Task UpsertFromEventsAsync(TrackingEvent[] events, string[] appUserIds)
+    {
+        // Keep only the latest event per (app, user), merging user props along the way
+        var byUser = new Dictionary<(string, string), (TrackingEvent Event, string PropsJson)>();
+        foreach (var i in Enumerable.Range(0, events.Length).OrderBy(i => events[i].Timestamp))
+        {
+            var e = events[i];
+            var userId = appUserIds[i];
             if (string.IsNullOrWhiteSpace(userId))
                 continue;
 
+            var appId = e.IsDebug ? $"{e.AppId}_DEBUG" : e.AppId;
             var key = (appId, userId);
             if (byUser.TryGetValue(key, out var existing))
             {
@@ -78,8 +100,6 @@ public class AppUserService : IAppUserService
                 byUser[key] = (e, string.IsNullOrEmpty(e.UserPropsJson) ? "{}" : e.UserPropsJson);
             }
         }
-
-        PruneSessionUsers(now);
 
         if (byUser.Count == 0)
             return;
