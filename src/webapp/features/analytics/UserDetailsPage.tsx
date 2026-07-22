@@ -43,26 +43,11 @@ export function Component() {
   return (
     <Page title={user?.name || userId}>
       {buildMode === "debug" && <DebugModeBanner />}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => navigate(`/${app.id}/users`)}>
-            <IconArrowLeft className="h-5 w-5" />
-          </Button>
-          <PageHeading title={user?.name || userId} subtitle={user?.name ? userId : undefined} />
-        </div>
-        {app.revenueCatProjectId && (
-          <a
-            href={`https://app.revenuecat.com/projects/${app.revenueCatProjectId}/customers/${encodeURIComponent(
-              userId
-            )}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <IconExternalLink className="h-4 w-4" />
-            Open in RevenueCat
-          </a>
-        )}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" onClick={() => navigate(`/${app.id}/users`)}>
+          <IconArrowLeft className="h-5 w-5" />
+        </Button>
+        <PageHeading title={user?.name || userId} subtitle={user?.name ? userId : undefined} />
       </div>
 
       {isLoading ? (
@@ -106,10 +91,25 @@ export function Component() {
           </div>
 
           <div className="rounded-lg border bg-card p-6">
-            <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
-              <IconUser className="text-muted-foreground h-5 w-5" />
-              Attributes
-            </h2>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="text-lg font-medium flex items-center gap-2">
+                <IconUser className="text-muted-foreground h-5 w-5" />
+                Attributes
+              </h2>
+              {app.revenueCatProjectId && (
+                <a
+                  href={`https://app.revenuecat.com/projects/${app.revenueCatProjectId}/customers/${encodeURIComponent(
+                    userId
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  <IconExternalLink className="h-3.5 w-3.5" />
+                  Open in RevenueCat
+                </a>
+              )}
+            </div>
             <dl className="space-y-4">
               <div>
                 <dt className="text-sm text-muted-foreground">User ID</dt>
