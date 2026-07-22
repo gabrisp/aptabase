@@ -25,6 +25,15 @@ export async function requestRegisterLink(name: string, email: string): Promise<
   trackEvent("register");
 }
 
+export type AuthConfig = {
+  canSignUp: boolean;
+  magicLinksEnabled: boolean;
+};
+
+export async function getAuthConfig(): Promise<AuthConfig> {
+  return api.get<AuthConfig>("/_auth/config");
+}
+
 export async function passwordSignIn(email: string, password: string): Promise<string | null> {
   const [status, response] = await api.fetch("POST", "/_auth/password/signin", { email, password });
 

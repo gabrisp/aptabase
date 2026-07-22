@@ -64,6 +64,18 @@ public class AuthController : Controller
         _tokenManager = tokenManager ?? throw new ArgumentNullException(nameof(tokenManager));
     }
 
+    // Public auth configuration so the SPA can hide unavailable options.
+    // canSignUp already accounts for the first-account exception.
+    [HttpGet("/api/_auth/config")]
+    public async Task<IActionResult> Config(CancellationToken cancellationToken)
+    {
+        return Ok(new
+        {
+            canSignUp = !await IsSignUpClosed(cancellationToken),
+            magicLinksEnabled = !_env.DisableMagicLinks,
+        });
+    }
+
     [HttpPost("/api/_auth/signin")]
     public async Task<IActionResult> SignIn([FromBody] SignInBodyRequest body, CancellationToken cancellationToken)
     {

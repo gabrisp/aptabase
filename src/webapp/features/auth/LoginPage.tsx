@@ -1,9 +1,9 @@
 import { Button } from "@components/Button";
 import { Page } from "@components/Page";
-import { passwordSignIn } from "@features/auth";
+import { getAuthConfig, passwordSignIn } from "@features/auth";
 import { isOAuthEnabled } from "@features/env";
 import { TextInput } from "@components/TextInput";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { DataResidency } from "./DataResidency";
 import { LegalNotice } from "./LegalNotice";
@@ -18,6 +18,13 @@ export function Component() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [canSignUp, setCanSignUp] = useState(false);
+
+  useEffect(() => {
+    getAuthConfig()
+      .then((config) => setCanSignUp(config.canSignUp))
+      .catch(() => setCanSignUp(false));
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,7 +93,7 @@ export function Component() {
             <p className="text-center text-sm h-10 text-muted-foreground">
               {error ? (
                 <span className="text-destructive">{error}</span>
-              ) : (
+              ) : canSignUp ? (
                 <span className="block">
                   Don't have an account?{" "}
                   <Link className="font-semibold text-foreground" to="/auth/register">
@@ -94,7 +101,7 @@ export function Component() {
                   </Link>
                   .
                 </span>
-              )}
+              ) : null}
             </p>
           </form>
         </div>

@@ -1,10 +1,10 @@
 import { Button } from "@components/Button";
 import { Page } from "@components/Page";
-import { passwordRegister } from "@features/auth";
+import { getAuthConfig, passwordRegister } from "@features/auth";
 import { isOAuthEnabled } from "@features/env";
 import { TextInput } from "@components/TextInput";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { DataResidency } from "./DataResidency";
 import { LegalNotice } from "./LegalNotice";
 import { Logo } from "./Logo";
@@ -14,11 +14,20 @@ import { SignInWithGoogle } from "./SignInWithGoogle";
 
 Component.displayName = "RegisterPage";
 export function Component() {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getAuthConfig()
+      .then((config) => {
+        if (!config.canSignUp) navigate("/auth", { replace: true });
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
