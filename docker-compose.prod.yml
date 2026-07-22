@@ -11,7 +11,10 @@
 
 services:
   aptabase:
-    build: .
+    # Builds straight from the GitHub repo so this compose also works when
+    # pasted standalone (e.g. Coolify "Docker Compose" service without a git source)
+    build:
+      context: https://github.com/gabrisp/aptabase.git#main
     restart: unless-stopped
     ports:
       - "8000:8080"
