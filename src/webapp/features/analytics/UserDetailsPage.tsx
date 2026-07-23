@@ -20,9 +20,6 @@ export function Component() {
   const { userId } = useParams();
   const navigate = useNavigate();
 
-  if (!app) return <Navigate to="/" />;
-  if (!userId) return <Navigate to={`/${app.id}/users`} />;
-
   useEffect(() => {
     trackEvent("user_details_viewed");
   }, []);
@@ -33,9 +30,14 @@ export function Component() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["app-user", app.id, buildMode, userId],
-    queryFn: () => getAppUser({ appId: app.id, buildMode, userId }),
+    queryKey: ["app-user", app?.id, buildMode, userId],
+    queryFn: () => getAppUser({ appId: app?.id ?? "", buildMode, userId: userId ?? "" }),
+    enabled: !!app && !!userId,
   });
+
+  // Hooks must all run before any conditional return
+  if (!app) return <Navigate to="/" />;
+  if (!userId) return <Navigate to={`/${app.id}/users`} />;
 
   const props = user ? parseUserProps(user.props) : {};
   const attributes = Object.entries(props).filter(([key]) => key !== "name");

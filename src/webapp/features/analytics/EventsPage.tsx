@@ -12,11 +12,11 @@ export function Component() {
   const app = useCurrentApp();
   const { buildMode } = useApps();
 
-  if (!app) return <Navigate to="/" />;
-
   useEffect(() => {
     trackEvent("events_viewed");
   }, []);
+
+  if (!app) return <Navigate to="/" />;
 
   return (
     <Page title="Events">
